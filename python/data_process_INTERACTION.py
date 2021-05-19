@@ -10,15 +10,16 @@ data_root = '../dataset/INTERACTION/'
 history_frames = 6  # 3 second * 2 frame/second
 future_frames = 6  # 3 second * 2 frame/second
 total_frames = history_frames + future_frames
-max_num_object = 350  # maximum number of observed objects is 70
-neighbor_distance = 2  # meter
+max_num_object = 550  # maximum number of observed objects is 70
+neighbor_distance = 10  # meter
 
 # INTERACTION dataset format:
 # track_id, frame_id, timestamp_ms, agent_type, x, y, vx, vy, psi_rad, length, width
 total_feature_dimension = 11 + 1  # we add mark "1" to the end of each row to indicate that this row exists
 
 frame_rate = 5  # choose 1/2/5/10 fps
-agent_type = {'car': 1, 'truck': 2, 'bus': 3, 'motorcycle': 4, 'bicycle': 5}  # Only TC data include different agent type, DR data are all cars
+agent_type = {'car': 1, 'truck': 2, 'bus': 3, 'motorcycle': 4,
+              'bicycle': 5}  # Only TC data include different agent type, DR data are all cars
 
 
 def get_frame_instance_dict(pra_file_path):
@@ -44,7 +45,7 @@ def get_frame_instance_dict(pra_file_path):
         if frame_interval > 1:
             for row in content:
                 if (row[2] / 100) % frame_interval == 1:  # resample
-                    row[1] = (row[2] / 100) // frame_interval + 1    # reindex frame
+                    row[1] = (row[2] / 100) // frame_interval + 1  # reindex frame
                     n_dict = now_dict.get(row[1], {})
                     n_dict[row[0]] = row  # [2:]
                     now_dict[row[1]] = n_dict
@@ -123,7 +124,11 @@ def generate_train_data(pra_file_path):
         start_ind = int(start_ind)
         end_ind = int(start_ind + total_frames)
         observed_last = start_ind + history_frames - 1
-        if start_ind in frame_id_set and end_ind in frame_id_set and observed_last in frame_id_set:
+        ind_in_set = True
+        for x in range(start_ind, end_ind):
+            if x not in frame_id_set:
+                ind_in_set = False
+        if ind_in_set:
             object_frame_feature, neighbor_matrix, mean_xy = process_data(now_dict, start_ind, end_ind, observed_last)
             all_feature_list.append(object_frame_feature)
             all_adjacency_list.append(neighbor_matrix)
@@ -151,7 +156,11 @@ def generate_test_data(pra_file_path):
         end_ind = int(start_ind + history_frames)
         observed_last = start_ind + history_frames - 1
         # print(start_ind, end_ind)
-        if start_ind in frame_id_set and end_ind in frame_id_set and observed_last in frame_id_set:
+        ind_in_set = True
+        for x in range(start_ind, end_ind):
+            if x not in frame_id_set:
+                ind_in_set = False
+        if ind_in_set:
             object_frame_feature, neighbor_matrix, mean_xy = process_data(now_dict, start_ind, end_ind, observed_last)
             all_feature_list.append(object_frame_feature)
             all_adjacency_list.append(neighbor_matrix)
@@ -194,7 +203,6 @@ def generate_data(pra_file_path_list, pra_is_train=True):
 
 
 if __name__ == '__main__':
-
     train_file_path_list = sorted(glob.glob(os.path.join(data_root, 'prediction_train/*.csv')))
     test_file_path_list = sorted(glob.glob(os.path.join(data_root, 'prediction_test/*.csv')))
 
@@ -203,4 +211,3 @@ if __name__ == '__main__':
 
     print('Generating Testing Data.')
     generate_data(test_file_path_list, pra_is_train=False)
-

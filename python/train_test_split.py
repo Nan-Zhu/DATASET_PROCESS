@@ -21,13 +21,16 @@ def train_test_split(data_set, test_size, random_state):
     split_start = random.randint(0, int(data_set_count * (1 - test_size)))
     split_end = int(split_start + data_set_count * test_size)
     train_data = data_set[:split_start]
-    train_data = train_data.append(data_set[split_end:])
     test_data = data_set[split_start:split_end]
+    train_data_append = data_set[split_end:].copy(deep=True)
+    track_id_diff = test_data['track_id'].max() - test_data['track_id'].min() - 1
+    train_data_append['track_id'] = train_data_append['track_id'] - track_id_diff
+    train_data = train_data.append(train_data_append)
     train_data.to_csv('../dataset/INTERACTION/prediction_train/train_data.csv', index=False)
     test_data.to_csv('../dataset/INTERACTION/prediction_test/test_data.csv', index=False)
     print('train_data split: size', train_data.shape)
     print('test_data split: size', test_data.shape)
-
+    print('max object number is', train_data['track_id'].max())
 
 def load_data(split_file_path_list):
     print('Loading dataset...')
