@@ -1,4 +1,7 @@
 # DATASET_PROCESS
+
+for INTERACTION dataset
+
 put dataset into recorded_trackfiles 
 
 run train_test_split.py
