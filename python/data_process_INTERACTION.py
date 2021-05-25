@@ -10,7 +10,7 @@ data_root = '../dataset/INTERACTION/'
 history_frames = 6  # 3 second * 2 frame/second
 future_frames = 6  # 3 second * 2 frame/second
 total_frames = history_frames + future_frames
-max_num_object = 550  # maximum number of observed objects is 70
+max_num_object = 120  # maximum number of observed objects is 70
 neighbor_distance = 10  # meter
 
 # INTERACTION dataset format:
@@ -28,7 +28,7 @@ def get_frame_instance_dict(pra_file_path):
 		{frame_id: 
 			{object_id: 
 				# 11 features
-				[object_id, frame_id, timestamp_ms, object_type, position_x, position_y, velocity_x, velocity_y, psi_rad, object_length, object_width]
+				[track_id, frame_id, timestamp_ms, agent_type, x, y, vx, vy, psi_rad, length, width]
 			}
 		}
 		object_type: agent_type{ car: 1,  trunk: 2}
