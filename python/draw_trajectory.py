@@ -13,6 +13,8 @@ def draw_trajectory(predicted_data, real_data):
     predicted_data: matrix (objects, total_frames, xy)
     real_data: matrix (objects, total_frames, xy)
     """
+
+
     mean_xy = (real_data[0][0])
     real_data = real_data - mean_xy
     predicted_data = predicted_data - mean_xy
