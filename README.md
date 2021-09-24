@@ -2,7 +2,7 @@
 
 for INTERACTION dataset
 
-put dataset into recorded_trackfiles 
+put csv files into dataset/interaction/recorded_trackfiles 
 
 run train_test_split.py
 
