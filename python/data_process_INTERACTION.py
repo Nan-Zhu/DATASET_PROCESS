@@ -10,14 +10,14 @@ data_root = '../dataset/INTERACTION/'
 history_frames = 6  # 3 second * 2 frame/second
 future_frames = 6  # 3 second * 2 frame/second
 total_frames = history_frames + future_frames
-max_num_object = 120  # maximum number of observed objects is 70
+max_num_object = 100  # maximum number of observed objects is 70
 neighbor_distance = 10  # meter
 
 # INTERACTION dataset format:
 # track_id, frame_id, timestamp_ms, agent_type, x, y, vx, vy, psi_rad, length, width
 total_feature_dimension = 11 + 1  # we add mark "1" to the end of each row to indicate that this row exists
 
-frame_rate = 5  # choose 1/2/5/10 fps
+frame_rate = 10  # choose 1/2/5/10 fps
 agent_type = {'car': 1, 'truck': 2, 'bus': 3, 'motorcycle': 4,
               'bicycle': 5}  # Only TC data include different agent type, DR data are all cars
 
@@ -206,8 +206,8 @@ if __name__ == '__main__':
     train_file_path_list = sorted(glob.glob(os.path.join(data_root, 'prediction_train/*.csv')))
     test_file_path_list = sorted(glob.glob(os.path.join(data_root, 'prediction_test/*.csv')))
 
-    print('Generating Training Data.')
+    print('Generating Training Data...')
     generate_data(train_file_path_list, pra_is_train=True)
 
-    print('Generating Testing Data.')
+    print('Generating Testing Data...')
     generate_data(test_file_path_list, pra_is_train=False)
