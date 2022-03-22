@@ -507,22 +507,25 @@ if __name__ == '__main__':
     lanelet_map_file = os.path.join(maps_dir, scenario_name + lanelet_map_ending)
 
     # read object data
-    file_path_list = sorted(glob.glob(os.path.join(root_dir, 'recorded_trackfiles/' + scenario_name + '/*000.csv')))
+    file_path_list = sorted(glob.glob(os.path.join(root_dir, 'dataset/INTERACTION/recorded_trackfiles/' + scenario_name + '/*000.csv')))
 
+    now_dict = {}
+    frame_id_set = {}
     for file_path in file_path_list:
         now_dict = get_frame_instance_dict(file_path)
         frame_id_set = sorted(set(now_dict.keys()))
 
     print('Generating DIA Data...')
 
-    for i in range(40):
+    # save plots
+    for i in range(10):
         fig, axes = plt.subplots(1, 1)
         fig.canvas.set_window_title("Interaction Dataset Visualization")
         print("Loading map...", i)
         projector = lanelet2.projection.UtmProjector(lanelet2.io.Origin(0, 0))
         laneletmap = lanelet2.io.load(lanelet_map_file, projector)
         draw_lanelet_map(laneletmap, axes)
-        f = random.randint(1, 1000)
+        f = random.randint(1, 100)
         draw_object(now_dict[frame_id_set[f]])
         obj_dia_dict = get_all_dia(laneletmap, now_dict[frame_id_set[f]])
         fig.set_size_inches(22, 16)
