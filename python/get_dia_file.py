@@ -14,29 +14,15 @@ import numpy as np
 from lanelet2.core import AttributeMap, TrafficLight, Lanelet, LineString3d, Point2d, Point3d, getId, \
     LaneletMap, BoundingBox2d, BasicPoint2d, BasicPoint3d
 
-scenario_name = "DR_USA_Intersection_EP0"
+scenario_name = "DR_CHN_Merging_ZS"
 agent_type = {'car': 1, 'truck': 2, 'bus': 3, 'motorcycle': 4,
               'bicycle': 5}
 neighbor_distance = 30
 
 # merge lanelet id
-merge_to_id = {
-    'DR_CHN_Merging_ZS': [30035, 30037],
-    'DR_USA_Intersection_EP0': [30030, 30008],
-    "DR_CHN_Roundabout_LN": []
-}
-
-merge_id = {
-    'DR_CHN_Merging_ZS': [30036, 30028],
-    'DR_USA_Intersection_EP0': [30022, 30032],
-    "DR_CHN_Roundabout_LN": []
-}
-
-merge_from_id = {
-    'DR_CHN_Merging_ZS': [30031, 30023],
-    'DR_USA_Intersection_EP0': [30023, 30044],
-    "DR_CHN_Roundabout_LN": []
-}
+merge_to_id = [30035, 30037]
+merge_id = [30036, 30028]
+merge_from_id = [30031, 30023]
 
 ll_seg_num = 15
 
@@ -172,7 +158,6 @@ def get_frame_instance_dict(pra_file_path):
 		object_type: agent_type{ car: 1,  trunk: 2}
 	'''
     with open(pra_file_path, 'r') as reader:
-        # print(train_file_path)
         reader.readline()
         content = np.array([x.strip().split(',') for x in reader.readlines()]).astype(str)
         now_dict = {}
@@ -181,7 +166,7 @@ def get_frame_instance_dict(pra_file_path):
         content = content.astype(float)
         for row in content:
             n_dict = now_dict.get(row[1], {})
-            n_dict[row[0]] = row  # [2:]
+            n_dict[row[0]] = row
             now_dict[row[1]] = n_dict
     return now_dict
 
@@ -260,10 +245,6 @@ def draw_llt(llt):  # draw a list of lanelets
         pt_x = [pt.x for pt in centerline]
         pt_y = [pt.y for pt in centerline]
         plt.plot(pt_x, pt_y, marker='x')
-        #plt.text( (pt_x[0]+ pt_x[-1]) / 2, (pt_y[0]+pt_y[-1])/2+0.5, str(ll.id), color='b')
-        #plt.text(pt_x[0],pt_y[0] , str(ll.id), color='r')
-        #plt.scatter(pt_x[0], pt_y[0], color='r')
-        #plt.scatter(pt_x[-1], pt_y[-1], color='r')
 
 # geometric calculation
 def in_range(x, bound1, bound2):   # x in range of bound1 and bound2 inclusive
@@ -333,7 +314,7 @@ def get_nearest_centerline(map, pt, theta=None):  # get nearest lanelet based on
     return nearest_ll
 
 
-            # lanelet relation judgement
+# lanelet relation judgement
 def hasPathFromTo(graph, start, target):  # judge if there is a path from start llt to target llt
     class TargetFound(BaseException):
         pass
@@ -444,10 +425,7 @@ def get_dia(graph, start, tail, llt, tail_on_llt, object_dict, merge_pt):
         if not stop:
             # add pt on lanelet after start
             if llt1 == llt and len(dia) == 1:
-                if llt1.id in merge_id[scenario_name]:   # llt merges at merge pt
-                    if scenario_name == 'DR_USA_Intersection_EP0':
-                        dia[0] = merge_pt[llt1.id]
-                    else:
+                if llt1.id in merge_id:   # llt merges at merge pt
                         dia.append(merge_pt[llt1.id])
                         Xe = X(merge_pt[llt1.id].x, merge_pt[llt1.id].y, 0, 0, 0)
                 else:
@@ -481,10 +459,7 @@ def get_dia(graph, start, tail, llt, tail_on_llt, object_dict, merge_pt):
                     if route:
                         path = route.shortestPath()
                         for ll in path:
-                            if ll.id in merge_id[scenario_name]:  # llt merges at merge pt
-                                if scenario_name == 'DR_USA_Intersection_EP0':
-                                    dia[0] = merge_pt[llt1.id]
-                                else:
+                            if ll.id in merge_id:  # llt merges at merge pt
                                     dia.append(merge_pt[llt1.id])
                                     Xe = X(merge_pt[llt1.id].x, merge_pt[llt1.id].y, 0, 0, 0)
                             else:
@@ -534,12 +509,9 @@ def get_control_point(n, dia):
 def get_all_dia(map, object_dict):
     # set lanelet merge point
     merge_pt = dict()
-    if scenario_name == 'DR_CHN_Merging_ZS':
-        merge_pt[merge_id[scenario_name][0]] = map.laneletLayer[30031].centerline[3]
-        merge_pt[merge_id[scenario_name][1]] = map.laneletLayer[30023].centerline[5]
-    if scenario_name == 'DR_USA_Intersection_EP0':
-        merge_pt[merge_id[scenario_name][0]] = map.laneletLayer[30030].centerline[0]
-        merge_pt[merge_id[scenario_name][1]] = map.laneletLayer[30014].centerline[0]
+
+    merge_pt[merge_id[0]] = map.laneletLayer[30031].centerline[3]
+    merge_pt[merge_id[1]] = map.laneletLayer[30023].centerline[5]
 
     # build graph from map
     traffic_rules = lanelet2.traffic_rules.create(lanelet2.traffic_rules.Locations.Germany,
@@ -597,23 +569,6 @@ def get_all_dia(map, object_dict):
         if len(llts_previous) == 0:
             centerline = ll.centerline
             start = BasicPoint2d(centerline[0].x, centerline[0].y)
-            if scenario_name == 'DR_USA_Intersection_EP0' and ll.id in merge_id[scenario_name]:
-                Xs = X(merge_pt[ll.id].x, merge_pt[ll.id].y, 0, 0, 0)
-            else:
-                Xs = X(start.x, start.y, 0, 0, 0)
-            dia, Xe, e_id = get_dia(graph, start, None, ll, tail_on_llt, object_dict, merge_pt)
-            Xf = get_control_point(ll_seg_num, dia)
-            Li = L(Xs, Xe, Xf)
-            Li.id = tmp_id * 10000 + e_id
-            tmp_id = tmp_id + 1
-            L_list.append(Li)
-            dia_list.append(dia)
-
-    # start from merge point
-    if scenario_name == 'DR_CHN_Merging_ZS':
-        for i in range(len(merge_id)):
-            ll = map.laneletLayer[merge_from_id[i]]
-            start = BasicPoint2d(merge_pt[merge_id[i]].x, merge_pt[merge_id[i]].y)
             Xs = X(start.x, start.y, 0, 0, 0)
             dia, Xe, e_id = get_dia(graph, start, None, ll, tail_on_llt, object_dict, merge_pt)
             Xf = get_control_point(ll_seg_num, dia)
@@ -623,6 +578,19 @@ def get_all_dia(map, object_dict):
             L_list.append(Li)
             dia_list.append(dia)
 
+    # start from merge point
+    for i in range(len(merge_id)):
+        ll = map.laneletLayer[merge_from_id[i]]
+        start = BasicPoint2d(merge_pt[merge_id[i]].x, merge_pt[merge_id[i]].y)
+        Xs = X(start.x, start.y, 0, 0, 0)
+        dia, Xe, e_id = get_dia(graph, start, None, ll, tail_on_llt, object_dict, merge_pt)
+        Xf = get_control_point(ll_seg_num, dia)
+        Li = L(Xs, Xe, Xf)
+        Li.id = tmp_id * 10000 + e_id
+        tmp_id = tmp_id + 1
+        L_list.append(Li)
+        dia_list.append(dia)
+
     #start from fork point
     for llt in laneletmap.laneletLayer:
         llts_following = graph.following(llt, False)
@@ -630,12 +598,11 @@ def get_all_dia(map, object_dict):
             for ll in llts_following:
                 centerline = ll.centerline
                 start = BasicPoint2d(centerline[0].x, centerline[0].y)
-                #plt.scatter(start.x, start.y, color='r')
+
                 Xs = X(start.x, start.y, 0, 0, 0)
                 dia, Xe, e_id = get_dia(graph, start, None, ll, tail_on_llt, object_dict, merge_pt)
                 Xf = get_control_point(ll_seg_num, dia)
-                # Xf = None
-                # draw_dia(dia)
+
                 Li = L(Xs, Xe, Xf)
                 Li.id = tmp_id * 10000 + e_id
                 tmp_id = tmp_id + 1
@@ -671,25 +638,8 @@ def get_dia_of_objects(dia_list, map, graph, object_dict, L_list):
                 # dia in front of object
                 if lanelet2.geometry.distance(pt, head) <= lanelet2.geometry.distance(pt, tail):
                     if hasPathFromTo(graph, llt1, llt2):
-                        if scenario_name == 'DR_USA_Intersection_EP0':
-                            if lanelet2.geometry.distance(pt, head) < neighbor_distance and abs(L_list[i].Xf.theta - get_theta(tail, head)) < math.pi / 2:
-                                choose = True
-                                break
-                        else:
-                            choose = True
-                            break
-                # dia behind object
-                # else:
-                #     if hasPathFromTo(graph, llt2, llt1):
-                #         route = graph.getRoute(llt2, llt1)
-                #         if route:
-                #             path = route.shortestPath()
-                #             for ll in path:
-                #                 if scenario_name == 'DR_CHN_Merging_ZS' and ll.id in merge_from_id:  # path through merge lanelet
-                #                     choose = False
-                #                     break
-                #         if not is_ego_lane(map, graph, llt1, llt2):  # not ego lane
-                #             choose = True
+                        choose = True
+                        break
 
             if choose:
                 min_dis = 10e9
@@ -698,15 +648,6 @@ def get_dia_of_objects(dia_list, map, graph, object_dict, L_list):
                     if lanelet2.geometry.distance(head, pt) < min_dis:
                         min_dis = lanelet2.geometry.distance(head, pt)
                 obj_dia_dict[id].append([L_list[i], min_dis])
-                for pt in dia:
-                    pt = BasicPoint2d(pt.x, pt.y)
-                    if lanelet2.geometry.distance(head, pt) <= neighbor_distance:
-                        obj_dia_dict[id].append(dia)
-                        if list(object_dict.keys()).index(id) == 0:
-                            draw_dia_of_object(dia, c)
-                        break
-        head, tail = get_obj_shape(id, object_dict)
-        plt.scatter(head.x, head.y, color='b')
 
     return obj_dia_dict
 
@@ -718,9 +659,6 @@ def to_array(f, id, dia):
     Xe = dia.Xe
     Xf = dia.Xf
 
-    #print(dia.id)
-    #print(Xs)
-    #print(Xe)
     arr = [f, id, dia.id, Xs.x, Xs.y, Xs.vx, Xs.vy, Xs.theta, Xe.x, Xe.y, Xe.vx, Xe.vy, Xe.theta]
     for pt in Xf.pts:
         arr.append(pt.x)
@@ -738,40 +676,24 @@ if __name__ == '__main__':
     lanelet_map_file = os.path.join(maps_dir, scenario_name + lanelet_map_ending)
 
     # read object data
-    file_path_list = sorted(glob.glob(os.path.join(root_dir, 'recorded_trackfiles/' + scenario_name + '/vehicle*.csv')))
+    file_path_list = sorted(glob.glob(os.path.join(root_dir, 'dataset/INTERACTION/recorded_trackfiles/' + scenario_name + '/vehicle_tracks_000.csv')))
 
     print('Generating DIA Data...')
 
-    # for file_path in file_path_list:
-    #     now_dict = get_frame_instance_dict(file_path)
-    #     frame_id_set = sorted(set(now_dict.keys()))
-    #     f = open(file_path[:-4]+'_dia.csv', 'w')
-    #     projector = lanelet2.projection.UtmProjector(lanelet2.io.Origin(0, 0))
-    #     laneletmap = lanelet2.io.load(lanelet_map_file, projector)
-    #     for frame in frame_id_set:
-    #         print("frame" + str(int(frame)))
-    #         obj_dia_dict = get_all_dia(laneletmap, now_dict[int(frame)])
-    #         for id in obj_dia_dict.keys():
-    #             for dia in obj_dia_dict[id]:
-    #                 arr = to_array(frame, id, dia)
-    #                 f.write(','.join(str(x) for x in arr)+'\n')
-    #     f.close()
-
-
-    for i in range(50):
-        fig, axes = plt.subplots(1, 1)
-        fig.canvas.set_window_title("Interaction Dataset Visualization")
-        print("Loading map...", i)
+    for file_path in file_path_list:
+        now_dict = get_frame_instance_dict(file_path)
+        frame_id_set = sorted(set(now_dict.keys()))
+        f = open(file_path[:-4]+'_dia.csv', 'w')
         projector = lanelet2.projection.UtmProjector(lanelet2.io.Origin(0, 0))
         laneletmap = lanelet2.io.load(lanelet_map_file, projector)
-        now_dict = get_frame_instance_dict(file_path_list[0])
-        frame_id_set = sorted(set(now_dict.keys()))
-        draw_lanelet_map(laneletmap, axes)
-        f = random.randint(1, 1000)
-        draw_object(now_dict[frame_id_set[f]])
-        obj_dia_dict = get_all_dia(laneletmap, now_dict[frame_id_set[f]])
-        fig.set_size_inches(22, 16)
-        plt.savefig(root_dir+"/plots/frame"+str(f)+".png")
-        #plt.show()
+        for frame in frame_id_set:
+            print("output frame" + str(int(frame)))
+            obj_dia_dict = get_all_dia(laneletmap, now_dict[int(frame)])
+            for id in obj_dia_dict.keys():
+                for dia in obj_dia_dict[id]:
+                    arr = to_array(frame, id, dia)
+                    f.write(','.join(str(x) for x in arr)+'\n')
+        f.close()
+
 
 
