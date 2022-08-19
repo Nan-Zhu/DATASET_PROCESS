@@ -24,9 +24,12 @@ merge_to_id = [30035, 30037]
 merge_id = [30036, 30028]
 merge_from_id = [30031, 30023]
 
-ll_seg_num = 15
+ll_seg_num = 5  # number of dia control points
 
 ########### Class ############
+
+# dia format: 
+# frame_id, object_id, dia_id, Xs_x, Xs_y, Xs_vx, Xs_vy, Xs_theta, Xe_x, Xe_y, Xe_vx, Xe_vy, Xe_theta, Xf_p1_x, Xf_p1_y, Xf_p2_x, Xf_p2_y, Xf_p3_x, Xf_p3_y, Xf_p4_x, Xf_p4_y, Xf_p5_x, Xf_p5_y, Xf_p6_x, Xf_p6_y, Xf_length, Xf_theta
 class X:
     def __init__(self, x, y, vx, vy, theta):
         self.x = x
